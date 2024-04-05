@@ -9,34 +9,11 @@ import os
 import time
 import threading
 from colorama import init, Fore
-from utils import print_colored, get_random_user_agent, generate_secure_random_string, sanitize_filename
+from utils import print_colored, get_random_user_agent, generate_secure_random_string, save_data_to_file, save_url_to_csv
+from crawler_constants import *
+
 # Initialize colorama
 init()
-
-TEMP_DB_PATH = 'temp'
-DATA_DIRECTORY = 'archive'
-CSV_FILE_PATH = os.path.join('data', 'data.csv')
-
-
-def save_data_to_file(data, directory, filename):
-    os.makedirs(directory, exist_ok=True)
-    filepath = os.path.join(directory, sanitize_filename(filename))
-    with open(filepath, 'w', encoding='utf-8') as file:
-        file.write(data)
-    print(f"Data saved to: {filepath}")
-
-
-def save_url_to_csv(filename, url):
-    with open(CSV_FILE_PATH, 'a', newline='', encoding='utf-8') as csvfile:
-        fieldnames = ['filename', 'url', 'timestamp']
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        if not os.path.exists(CSV_FILE_PATH):
-            writer.writeheader()
-        timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        writer.writerow(
-            {'filename': filename, 'url': url, 'timestamp': timestamp})
-        print_colored(
-            f"URL saved to CSV: filename={filename}, url={url}", Fore.GREEN)
 
 
 def save_url_to_temp_db(url):
@@ -100,7 +77,7 @@ async def web_crawler_with_saving_and_urls(id, url, session, connector):
                     filename = f"{id}_{timestamp}_{generate_secure_random_string(8)}.html"
                     save_data_to_file(await response.text(), DATA_DIRECTORY, filename)
                     # Save the final URL to CSV
-                    save_url_to_csv(filename, final_url)
+                    save_url_to_csv(filename, final_url, CSV_FILE_PATH)
                     # Save the final URL to the temporary database
                     save_url_to_temp_db(final_url)
                     if final_url != url:
