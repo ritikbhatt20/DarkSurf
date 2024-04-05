@@ -1,6 +1,6 @@
 import aiohttp
 import asyncio
-from aiohttp_socks import ProxyType, ProxyConnector
+from aiohttp_socks import ProxyConnector
 from bs4 import BeautifulSoup
 from datetime import datetime
 from urllib.parse import urljoin
