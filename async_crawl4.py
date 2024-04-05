@@ -6,43 +6,16 @@ from datetime import datetime
 from urllib.parse import urljoin
 import csv
 import os
-import secrets
-import string
-from fake_useragent import UserAgent
 import time
 import threading
 from colorama import init, Fore
-
+from utils import print_colored, get_random_user_agent, generate_secure_random_string, sanitize_filename
 # Initialize colorama
 init()
 
 TEMP_DB_PATH = 'temp'
 DATA_DIRECTORY = 'archive'
 CSV_FILE_PATH = os.path.join('data', 'data.csv')
-
-
-def print_colored(message, color=Fore.WHITE):
-    print(color + message + Fore.RESET)
-
-
-async def fetch(url, session):
-    async with session.get(url) as response:
-        return await response.text()
-
-
-def get_random_user_agent():
-    user_agent = UserAgent()
-    return user_agent.random
-
-
-def generate_secure_random_string(length=8):
-    alphabet = string.ascii_letters + string.digits
-    return ''.join(secrets.choice(alphabet) for _ in range(length))
-
-
-def sanitize_filename(filename):
-    invalid_chars = ['<', '>', ':', '"', '/', '\\', '|', '?', '*']
-    return ''.join(char if char not in invalid_chars else '_' for char in filename)
 
 
 def save_data_to_file(data, directory, filename):
@@ -105,7 +78,7 @@ async def web_crawler_with_saving_and_urls(id, url, session, connector):
     try:
         # Add a random user agent to the headers
         headers = {'User-Agent': get_random_user_agent()}
-        
+
         # Use a try-except block to catch CancelledError
         try:
             async with session.get(url, headers=headers, allow_redirects=True) as response:
@@ -221,7 +194,68 @@ def save_url_to_not_found(url):
     print_colored(f"URL saved to not found file: {url}", Fore.RED)
 
 
+async def retry_scrape_not_found_urls(session, connector):
+    not_found_file_path = 'data/not_found.txt'
+    try:
+        with open(not_found_file_path, 'r', encoding='utf-8') as file:
+            not_found_urls = [line.strip() for line in file if line.strip()]
+    except FileNotFoundError:
+        print_colored("Not found file not found.", Fore.RED)
+        return
+
+    for url in not_found_urls:
+        print_colored(
+            f"\nRetrying to scrape not found URL: {url}", Fore.YELLOW)
+        await web_crawler_with_saving_and_urls(None, url, session, connector)
+        # If the scraping is successful, remove the URL from not_found.txt
+        # if url not in load_urls_from_temp_db():
+        remove_url_from_not_found(url)
+
+
+def remove_url_from_not_found(url):
+    not_found_file_path = 'data/not_found.txt'
+    try:
+        with open(not_found_file_path, 'r', encoding='utf-8') as file:
+            not_found_urls = [line.strip() for line in file if line.strip()]
+
+        if url in not_found_urls:
+            not_found_urls.remove(url)
+
+            with open(not_found_file_path, 'w', encoding='utf-8') as file:
+                for not_found_url in not_found_urls:
+                    file.write(f"{not_found_url}\n")
+            print_colored(
+                f"Removed URL from not found file: {url}", Fore.GREEN)
+        else:
+            print_colored(
+                f"URL not found in not found file: {url}", Fore.YELLOW)
+    except FileNotFoundError:
+        print_colored("Not found file not found.", Fore.RED)
+    except Exception as e:
+        print_colored(
+            f"Error while removing URL from not found file: {str(e)}", Fore.RED)
+
+
+async def periodic_retry_scrape():
+    print_colored("Periodic Retry Enabled", Fore.CYAN)
+    while True:
+        time.sleep(24*60*60)  # 1 day
+        try:
+            connector = ProxyConnector.from_url('socks5://localhost:9050')
+
+            async with aiohttp.ClientSession(connector=connector) as session:
+                await retry_scrape_not_found_urls(session, connector)
+        except Exception as e:
+            print_colored(f"Error during periodic retry: {str(e)}", Fore.RED)
+
+
 if __name__ == '__main__':
+    clear_thread = threading.Thread(target=clear_temp_db_data)
+    clear_thread.daemon = True  # The thread will exit when the main program exits
+    clear_thread.start()
+    # retry_thread = threading.Thread(target=periodic_retry_scrape)
+    # retry_thread.daemon = True
+    # retry_thread.start()
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
