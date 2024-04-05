@@ -1,0 +1,11 @@
+docker ps
+docker run --name cluster -p 9042:9042 -d cassandra:latest
+docker exec -it cluster cqlsh
+CREATE KEYSPACE IF NOT EXISTS employee WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};
+CREATE TABLE IF NOT EXISTS employee.details (     user_id UUID PRIMARY KEY,     username TEXT,     email TEXT,   age INT );
+INSERT INTO employee.details (user_id, username, email, age) VALUES (     UUID(), 'john_doe', 'john.doe@example.c
+om', 30 );
+use employee;
+select * from details;
+
+CREATE TABLE IF NOT EXISTS lol ( user_id UUID PRIMARY KEY, filename TEXT,label TEXT,categories TEXT);
