@@ -1,2 +1,4 @@
 starttor.bat
 venv/
+data/
+*.txt
