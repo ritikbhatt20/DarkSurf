@@ -69,8 +69,12 @@ def process_files(directory_path='archive'):
         close_session(cluster)
 
 if __name__ == "__main__":
+<<<<<<< HEAD
     process_files()
 
 
 
 
+=======
+    process_files()
+>>>>>>> ba3d6d822e138390d9fa4f78fa1cbda719a01764
