@@ -6,23 +6,15 @@ from datetime import datetime
 from urllib.parse import urljoin
 import csv
 import os
-import secrets
-import string
-from fake_useragent import UserAgent
 from colorama import init, Fore
 from utils import print_colored, get_random_user_agent, generate_secure_random_string, sanitize_filename
 
-# Initialize colorama                                           
+# Initialize colorama
 init()
 
 TEMP_DB_PATH = 'temp'
 DATA_DIRECTORY = 'archive'
 CSV_FILE_PATH = os.path.join('data', 'data.csv')
-
-
-async def fetch(url, session):
-    async with session.get(url) as response:
-        return await response.text()
 
 
 def save_data_to_file(data, directory, filename):
