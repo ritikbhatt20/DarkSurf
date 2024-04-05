@@ -58,3 +58,34 @@ def save_url_to_csv(filename, url, csvfile, i2p=False):
         else:
             print_colored(
                 f"URL saved to CSV: filename={filename}, url={url}", Fore.MAGENTA)
+
+
+def save_url_to_temp_db(url, TEMP_DB_PATH='temp', i2p=False):
+    os.makedirs(TEMP_DB_PATH, exist_ok=True)
+    temp_db_file = os.path.join(TEMP_DB_PATH, "scraped.txt")
+
+    # Check if the URL is already in the database
+    if url in load_urls_from_temp_db():
+        if not i2p:
+            print_colored(
+                f"URL already in temporary database: {url}", Fore.YELLOW)
+        else:
+            print_colored(
+                f"URL already in temporary database: {url}", Fore.MAGENTA)
+        return
+
+    with open(temp_db_file, 'a', encoding='utf-8') as file:
+        file.write(f"{url}\n")
+    if not i2p:
+        print_colored(f"URL saved to temporary database: {url}", Fore.GREEN)
+    else:
+        print_colored(f"URL saved to temporary database: {url}", Fore.MAGENTA)
+
+
+def load_urls_from_temp_db(TEMP_DB_PATH='temp'):
+    urls_set = set()
+    temp_db_file_path = os.path.join(TEMP_DB_PATH, "scraped.txt")
+    if os.path.exists(temp_db_file_path):
+        with open(temp_db_file_path, 'r', encoding='utf-8') as file:
+            urls_set.update(line.strip() for line in file if line.strip())
+    return urls_set

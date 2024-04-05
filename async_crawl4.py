@@ -9,34 +9,11 @@ import os
 import time
 import threading
 from colorama import init, Fore
-from utils import print_colored, get_random_user_agent, generate_secure_random_string, save_data_to_file, save_url_to_csv
+from utils import print_colored, get_random_user_agent, generate_secure_random_string, save_data_to_file, save_url_to_csv, save_url_to_temp_db, load_urls_from_temp_db
 from crawler_constants import *
 
 # Initialize colorama
 init()
-
-
-def save_url_to_temp_db(url):
-    os.makedirs(TEMP_DB_PATH, exist_ok=True)
-    temp_db_file = os.path.join(TEMP_DB_PATH, "scraped.txt")
-
-    # Check if the URL is already in the database
-    if url in load_urls_from_temp_db():
-        print_colored(f"URL already in temporary database: {url}", Fore.YELLOW)
-        return
-
-    with open(temp_db_file, 'a', encoding='utf-8') as file:
-        file.write(f"{url}\n")
-    print_colored(f"URL saved to temporary database: {url}", Fore.GREEN)
-
-
-def load_urls_from_temp_db():
-    urls_set = set()
-    temp_db_file_path = os.path.join(TEMP_DB_PATH, "scraped.txt")
-    if os.path.exists(temp_db_file_path):
-        with open(temp_db_file_path, 'r', encoding='utf-8') as file:
-            urls_set.update(line.strip() for line in file if line.strip())
-    return urls_set
 
 
 async def web_crawler_with_saving_and_urls(id, url, session, connector):
